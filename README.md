@@ -18,10 +18,10 @@ Clicking on a group toggles the side panel with group details.
 Clicking the same group again closes the side panel.
 
 Database Schema:
-Column Name	    Data Type	       
-id	            UUID	            
-group_name	    VARCHAR	            
-project	        VARCHAR	            
-labels	        TEXT[]	            
-members	        INT8	            
-last_active	    TIMESTAMPZ	        
+Column Name:	    Data Type	       
+id:	            UUID	            
+group_name:	    VARCHAR	            
+project:	        VARCHAR	            
+labels:	        TEXT[]	            
+members:	        INT8	            
+last_active:	    TIMESTAMPZ	        
