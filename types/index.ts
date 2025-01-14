@@ -1,10 +1,19 @@
 interface Group {
     id: string;
-    name: string;
-    project: 'Demo' | 'Clients';
-    labels: string[];
+    group_name: string;
+    project: string;
+    lables: string[];
     members: number;
-    lastActive: string;
-    isOnline?: boolean;
-    icon?: string;
+    last_active: string;
+    isOnline: boolean;
+    icon: string;
+}
+  
+interface GroupListProps {
+    onGroupSelect: (group: Group) => void;
+    selectedGroup: Group | null;
+}
+  
+interface GroupDetailsProps {
+    group: Group | null;
 }
