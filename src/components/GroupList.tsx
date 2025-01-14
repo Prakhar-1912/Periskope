@@ -1,87 +1,122 @@
-  import React, { useState, useEffect } from 'react';
-  import { Search, Filter, Users, RefreshCw } from 'lucide-react';
-  import {supabase} from '../../supabaseClient';
+import React, { useState, useEffect } from 'react';
+import { Users } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
+import { 
+  getLabelColors, 
+  formatDate,
+  getProjectBadgeStyle 
+} from '../utils/grouputils';
 
-  export function GroupList({ onGroupSelect, selectedGroup }: GroupListProps) {
-    const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
-    const [groups, setGroups] = useState<Group[]>([]);
+const formatLabel = (label: string) => {
+  const words = label.trim().split(/\s+/);
+  if (words.length === 1) {
+    return label;
+  }
+  return `${label.slice(0, 4)}..`;
+};
 
-    useEffect(() => {
-      const fetchGroups = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('group_details')
-            .select('*');
+export function GroupList({ onGroupSelect, selectedGroup }: GroupListProps) {
+  const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [expandedLabels, setExpandedLabels] = useState<Set<string>>(new Set());
+  
 
-          if (error) {
-            console.error('Error fetching groups:', error.message);
-          } else if (data) {
-            setGroups(data);
-          }
-        } catch (err) { 
-          console.error('Unexpected error fetching groups:', err);
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('group_details')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching groups:', error.message);
+        } else if (data) {
+          setGroups(data);
         }
-      };
-
-      fetchGroups();
-    }, []);
-
-    console.log(groups)
-
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, groupId: string) => {
-      e.stopPropagation();
-      const newSelected = new Set(selectedGroups);
-      if (newSelected.has(groupId)) {
-        newSelected.delete(groupId);
-      } else {
-        newSelected.add(groupId);
+      } catch (err) {
+        console.error('Unexpected error fetching groups:', err);
       }
-      setSelectedGroups(newSelected);
     };
 
+    fetchGroups();
+  }, []);
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>, groupId: string) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedGroups);
+    if (newSelected.has(groupId)) {
+      newSelected.delete(groupId);
+    } else {
+      newSelected.add(groupId);
+    }
+    setSelectedGroups(newSelected);
+  };
+
+  const toggleLabels = (groupId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newExpanded = new Set(expandedLabels);
+    if (newExpanded.has(groupId)) {
+      newExpanded.delete(groupId);
+    } else {
+      newExpanded.add(groupId);
+    }
+    setExpandedLabels(newExpanded);
+  };
+
+  const renderLabels = (group: Group) => {
+    if (!group.lables?.length) return null;
+
+    const isExpanded = expandedLabels.has(group.id);
+    const labels = group.lables;
+    const displayLabels = isExpanded ? labels : labels.slice(0, 2);
+    const hasMore = labels.length > 2;
+
     return (
-      <div className="flex-1 border-r">
-        <div className="border-b">
-          <div className="flex items-center justify-between mx-4 my-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm text-gray-600">groups</h2>
-              <Users className="w-4 h-4 text-gray-500" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 border-t p-1">
-            <div className="relative w-48">
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full pl-8 pr-3 py-1 text-sm border rounded-md"
+      <div className="flex items-center gap-1 overflow-hidden">
+        {displayLabels.map((label: string, index: number) => {
+          const colors = getLabelColors(label);
+          return (
+            <span
+              key={index}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs"
+              style={{
+                backgroundColor: colors.background,
+                color: colors.text
+              }}
+            >
+              <span 
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: colors.text }}
               />
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            </div>
-            <button className="flex items-center gap-1 px-2 py-1 text-sm border rounded-md text-gray-600 hover:bg-gray-50">
-              <Filter className="w-4 h-4" />
-              <span>Filter</span>
-            </button>
-            <div className="flex items-center gap-2 ml-auto">
-              <button className="bg-green-600 text-white px-3 py-1 text-sm rounded-md hover:bg-green-700">
-                Bulk message
-              </button>
-              <button className="text-gray-600 hover:bg-gray-50 px-3 py-1 text-sm rounded-md border">
-                Group Actions
-              </button>
-            </div>
+              {formatLabel(label)}
+            </span>
+          );
+        })}
+        {hasMore && !isExpanded && (
+          <button
+            onClick={(e) => toggleLabels(group.id, e)}
+            className="text-xs text-gray-500 hover:text-gray-700 ml-1"
+          >
+            +{labels.length - 2}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex-1 border-r">
+      <div className="overflow-x-auto">
+        <div className="min-w-[768px]">
+          <div className="grid grid-cols-12 px-4 py-2 border-b text-sm text-gray-600 bg-gray-50">
+            <div className="col-span-5">Group Name</div>
+            <div className="col-span-2">Project</div>
+            <div className="col-span-3">Labels</div>
+            <div className="col-span-1 text-center">Members</div>
+            <div className="col-span-1 text-right">Last Active</div>
           </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[768px]">
-            <div className="grid grid-cols-12 px-4 py-2 border-b text-sm text-gray-600 bg-gray-50">
-              <div className="col-span-5">Group Name</div>
-              <div className="col-span-2">Project</div>
-              <div className="col-span-3">Labels</div>
-              <div className="col-span-1 text-center">Members</div>
-              <div className="col-span-1 text-right">Last Active</div>
-            </div>
-
+          <div className="overflow-x-auto">
             <div className="divide-y">
               {groups.map((group) => (
                 <div
@@ -98,33 +133,28 @@
                       onChange={(e) => handleCheckboxChange(e, group.id)}
                       className="w-4 h-4 rounded border-gray-300"
                     />
-                    <span className="text-xl">{group.icon}</span>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-gray-600" />
+                    </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm text-black">{group.group_name}</span>
-                        {group.isOnline && (
-                          <span className="w-2 h-2 bg-green-500 rounded-full" />
-                        )}
                       </div>
                     </div>
                   </div>
                   <div className="col-span-2">
-                    <span className={`text-sm ${
-                      group.project === 'Demo' ? 'text-blue-500' : 'text-orange-500'
-                    }`}>
-                      #{group.project}
+                    <span className={`inline-flex px-2 py-0.5 rounded-md text-sm ${getProjectBadgeStyle(group.project)}`}>
+                      # {group.project}
                     </span>
                   </div>
-                  <div className="col-span-3 flex items-center gap-2">
-                    {group.lables?.map((label, index) => (
-                      <span key={index} className="text-sm text-gray-600">
-                        • {label}
-                      </span>
-                    ))}
+                  <div className="col-span-3">
+                    {renderLabels(group)}
                   </div>
-                  <div className="col-span-1 text-center text-sm text-black">{group.members}</div>
+                  <div className="col-span-1 text-center text-sm text-black">
+                    {group.members}
+                  </div>
                   <div className="col-span-1 text-right text-sm text-gray-500">
-                    {group.last_active}
+                    {formatDate(group.last_active, true)}
                   </div>
                 </div>
               ))}
@@ -132,5 +162,8 @@
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+export default GroupList;

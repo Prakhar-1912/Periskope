@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
-import {GroupList} from '@/components/GroupList';
-import {GroupDetails} from '@/components/GroupDetails';
+import { GroupList } from '@/components/GroupList';
+import { GroupDetails } from '@/components/GroupDetails';
+import Groupheader from '@/components/GroupHeader';
 
 export default function Home() {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
@@ -10,19 +11,21 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-white">
       <Sidebar />
-      {/* Container for Group List and Group Details */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Group List Container: Fixed height with scrolling */}
-        <div className="flex-1 overflow-y-auto">
-          <GroupList onGroupSelect={setSelectedGroup} selectedGroup={selectedGroup} />
+      <div className="flex flex-1 flex-col">
+        <div className="flex-none">
+          <Groupheader />
         </div>
-        
-        {/* Group Details Container: Only visible if a group is selected */}
-        {selectedGroup && (
-          <div className="w-80 border-l overflow-y-auto">
-            <GroupDetails group={selectedGroup} />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <GroupList onGroupSelect={setSelectedGroup} selectedGroup={selectedGroup} />
           </div>
-        )}
+
+          {selectedGroup && (
+            <div className="w-full md:w-80 border-l overflow-y-auto">
+              <GroupDetails group={selectedGroup} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

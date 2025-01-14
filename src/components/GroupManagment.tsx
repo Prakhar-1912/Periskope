@@ -15,7 +15,11 @@ export default function GroupManagement() {
           onGroupSelect={handleGroupSelect}
           selectedGroup={selectedGroup}
         />
-        <GroupDetails group={selectedGroup} />
+       {selectedGroup && (
+        <div className="hidden md:block w-full">
+          <GroupDetails group={selectedGroup} />
+        </div>
+      )}
       </div>
     );
 }
