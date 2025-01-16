@@ -1,4 +1,4 @@
-import { Search, Filter, Users, RefreshCw, FileText, Bell } from 'lucide-react';
+import { Search, Filter, Users, FileText, Bell } from 'lucide-react';
 
 const GroupHeader = () => {
     return (
